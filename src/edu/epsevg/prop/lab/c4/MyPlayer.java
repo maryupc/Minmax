@@ -64,7 +64,7 @@ implements Jugador, IAuto{
         /*O si hemos llegado a profundidad 0 o si ya esta lleno la tabla actual y entonces 
             Llamamos a nuestra heuristica*/
         }else if(profunditat == 0 || (!(table.espotmoure()))){
-            return 0; //Se llamaria a la heuristica 
+           return calculaHeuristica(table);
         }
         
         /*Turno de nuestro jugador*/
@@ -102,6 +102,134 @@ implements Jugador, IAuto{
         }
     }
     
+        /**
+     * Calcula la puntuación total del tablero combinando todas las heurísticas.
+     * @param tauler Estado actual del tablero
+     * @return Puntuación total del tablero
+     */
+    private int calculaHeuristica(Tauler tauler) {
+        //Calculamos todas las heurisiticas posibles(horizontales, verticales y las 2 diagonales)
+        return heuristicaHorizontal(tauler) +
+               heuristicaVertical(tauler) +
+               heuristicaDiagonalED(tauler) +
+               heuristicaDiagonalDE(tauler);
+    }
+
+    /**
+     * Heurística para filas horizontales.
+     * @param tauler Estado actual del tablero
+     * @return Puntuación basada en filas horizontales
+     */
+    private int heuristicaHorizontal(Tauler tauler) {
+        int puntuacion = 0;
+        int filas = tauler.getMida();
+        int columnas = tauler.getMida();
+        for (int fila = 0; fila < filas; fila++) {
+            //Evaluamos 4 espacios consecutivos
+            for (int col = 0; col < columnas - 3; col++) {
+                int contador = 0;
+                 //Recorremos las 4 posiciones
+                for (int offset = 0; offset < 4; offset++) {
+                    int valor = tauler.getColor(fila, col + offset);
+                    //Fichas del jugador suman
+                    if (valor == mytorn) contador++;
+                    //Fichas del oponente restan
+                    else if (valor == -mytorn) contador--;
+                }
+                //Sumamos a la puntuación total
+                puntuacion += contador;
+            }
+        }
+        //Devolvemos
+        return puntuacion;
+    }
+
+    /**
+     * Heurística para columnas verticales.
+     * @param tauler Estado actual del tablero
+     * @return Puntuación basada en columnas verticales
+     */
+    private int heuristicaVertical(Tauler tauler) {
+        int puntuacion = 0;
+        int filas = tauler.getMida();
+        int columnas = tauler.getMida();
+        for (int col = 0; col < columnas; col++) {
+            //Evaluamos 4 espacios consecutivos
+            for (int fila = 0; fila < filas - 3; fila++) {
+                int contador = 0;
+                //Recorremos las 4 posiciones
+                for (int offset = 0; offset < 4; offset++) {
+                    int valor = tauler.getColor(fila + offset, col);
+                    //Fichas del jugador suman
+                    if (valor == mytorn) contador++;
+                    //Fichas del oponente restan
+                    else if (valor == -mytorn) contador--;
+                }
+                //Sumamos a la puntuación total
+                puntuacion += contador;
+            }
+        }
+        //Devolvemos
+        return puntuacion;
+    }
+
+    /**
+     * Heurística para diagonales de izquierda a derecha.
+     * @param tauler Estado actual del tablero
+     * @return Puntuación basada en diagonales izquierda-derecha
+     */
+    private int heuristicaDiagonalED(Tauler tauler) {
+        int puntuacion = 0;
+        int filas = tauler.getMida();
+        int columnas = tauler.getMida();
+        for (int fila = 0; fila < filas - 3; fila++) {
+            //Evaluamos 4 espacios consecutivos
+            for (int col = 0; col < columnas - 3; col++) {
+                int contador = 0;
+                //Recorremos las 4 posiciones
+                for (int offset = 0; offset < 4; offset++) {
+                    int valor = tauler.getColor(fila + offset, col + offset);
+                    //Fichas del jugador suman
+                    if (valor == mytorn) contador++;
+                    //Fichas del oponente restan
+                    else if (valor == -mytorn) contador--;
+                }
+                //Sumamos a la puntuación total
+                puntuacion += contador;
+            }
+        }
+        //Devolvemos
+        return puntuacion;
+    }
+
+    /**
+     * Heurística para diagonales de derecha a izquierda.
+     * @param tauler Estado actual del tablero
+     * @return Puntuación basada en diagonales derecha-izquierda
+     */
+    private int heuristicaDiagonalDE(Tauler tauler) {
+        int puntuacion = 0;
+        int filas = tauler.getMida();
+        int columnas = tauler.getMida();
+        for (int fila = 3; fila < filas; fila++) {
+            //Evaluamos 4 espacios consecutivos
+            for (int col = 0; col < columnas - 3; col++) {
+                int contador = 0;
+                //Recorremos las 4 posiciones
+                for (int offset = 0; offset < 4; offset++) {
+                    int valor = tauler.getColor(fila - offset, col + offset);
+                    //Fichas del jugador suman
+                    if (valor == mytorn) contador++;
+                    //Fichas del oponente restan
+                    else if (valor == -mytorn) contador--;
+                }
+                
+                puntuacion += contador;
+            }
+        }
+       //Devovemos
+        return puntuacion;
+    }
 
     @Override
     public String nom() {
