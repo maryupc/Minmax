@@ -5,8 +5,9 @@
 package edu.epsevg.prop.lab.c4;
 
 /**
- *
- * @author maryx
+ * Nuestro propio jugador
+ * "CodeConnect4"
+ * @author maryx Mrmar
  */
 public class MyPlayer
 implements Jugador, IAuto{
@@ -14,28 +15,67 @@ implements Jugador, IAuto{
     private String nom;
     private int profun;
     private int mytorn = 1;
+    private int num_jug = 0;
+    private boolean activa_poda = true;
+    private int orden[];
+    private boolean orden_mig = false;
     
-    public MyPlayer(int profunditat){
+    /**
+     * Definicion de nuestro jugador 
+     * @param profunditat Profundidad pasada por el constructor que se quiere aplicar
+     * @param poda Booleano que decide si se hace uso de poda alfa-beta o no
+     * @param medio indica si queremos que se empiece por el medio a añadir las fichas, o a partir de la izq del todo
+     */
+    public MyPlayer(int profunditat, boolean poda, boolean medio){
         nom = "CodeConnect4";
         profun = profunditat;
+        activa_poda = poda;
+        orden_mig = medio;
+        
+        //Creamos array que contiene el orden que debera seguir, si empezamos por el medio 
+        orden = new int[8]; //Array que contiene el número de columnas del tablero
+        boolean right = true; //indicamos si empezamos a ir a la izq o a la derecha a contar 
+        int aux = 4;
+        for(int i = 0; i < 8; i++){
+            if(right){
+                aux +=i;
+                right = false;
+            }else{
+                aux -=i;
+                right = true;
+            }
+            orden[i] = aux;
+        }
+       
     } 
+    
+    /**
+     * Función que calcula el mejor movimiento del jugador con tal de poder ganar a su oponente  
+     * @param t  contiene el tablero de la jugada actual 
+     * @param color tiene el color de la ficha que pertenece a nuestro jugador
+     * @return devuelve la columna que se ha decidido en base del minmax y la heuristica con tal de ganar
+     */
     @Override
     public int moviment(Tauler t, int color) {
         mytorn = color;
         int col = 0;
         int value = Integer.MIN_VALUE;
+        int aux = 0;
         for(int i = 0; i < t.getMida(); i++){
-                if(t.movpossible(i)){
+            if(orden_mig) aux = orden[i];
+            else aux = i;
+                if(t.movpossible(aux)){
                     Tauler newtable= new Tauler(t);
-                    newtable.afegeix(i,mytorn);
-                   int newval = minimax(newtable,Integer.MIN_VALUE,Integer.MAX_VALUE, profun-1, false, i);
+                    newtable.afegeix(aux,mytorn);
+                   int newval = minimax(newtable,value,Integer.MAX_VALUE, profun-1, false, aux);
                    if(newval > value){
                        value = newval;
-                       col = i;
+                       col = aux;
                    }
                 }
+                
             }
-        
+        System.out.println("Número de jugades finals explorades: " + num_jug);
         return col;
     }
     
@@ -50,7 +90,7 @@ implements Jugador, IAuto{
      * @return  Valor con la heuristica mayor 
      */
     public int minimax(Tauler table,int alfa, int beta, int profunditat, boolean maxPlayer, int jugAnt){
-        
+        int aux = 0;
         /*Comprobamos si con la jugada anterior y nuestro jugador ya hemos encontrado
         una solucion, si es asi, devuelve +infinito*/
         if(table.solucio(jugAnt, mytorn)){
@@ -61,7 +101,7 @@ implements Jugador, IAuto{
         }else if(table.solucio(jugAnt, -(mytorn))){
             return Integer.MIN_VALUE+83647;
             
-        /*O si hemos llegado a profundidad 0 o si ya esta lleno la tabla actual y entonces 
+        /*Si hemos llegado a profundidad máx o si ya esta lleno la tabla actual, entonces 
             Llamamos a nuestra heuristica*/
         }else if(profunditat == 0 || (!(table.espotmoure()))){
            return calculaHeuristica(table);
@@ -70,44 +110,56 @@ implements Jugador, IAuto{
         /*Turno de nuestro jugador*/
         if(maxPlayer){
             int value = Integer.MIN_VALUE;;
+            
             for(int i = 0; i < table.getMida(); i++){
-                if(table.movpossible(i)){
+                if(orden_mig) aux = orden[i];
+                else aux = i;
+                if(table.movpossible(aux)){
                     Tauler newtable= new Tauler(table);
-                    newtable.afegeix(i,mytorn);
-                   int newval = minimax(newtable,alfa, beta, profunditat-1, false, i);
+                    newtable.afegeix(aux,mytorn);
+                   int newval = minimax(newtable,alfa, beta, profunditat-1, false,aux);
                    if(newval > value){
                        value = newval;
                    }
-                   alfa = Math.max(value, alfa);
-                   if(alfa>=beta) break;
+                   if(activa_poda){
+                        alfa = Math.max(value, alfa);
+                        if(alfa>=beta) break;
+                   }
+
                 }
             }
            return value; 
         }else{ //Turno del oponente 
             int value = Integer.MAX_VALUE;
+            
             for(int i = 0; i < table.getMida(); i++){
-                if(table.movpossible(i)){
+                if(orden_mig) aux = orden[i];
+                else aux = i;
+                if(table.movpossible(aux)){
                     Tauler newtable= new Tauler(table);
-                    newtable.afegeix(i,-(mytorn));
-                    
-                   int newval = minimax(newtable,alfa,beta, profunditat-1, true, i);
+                    newtable.afegeix(aux,-(mytorn));
+                   int newval = minimax(newtable,alfa,beta, profunditat-1, true,aux);
                    if(newval < value){
                        value = newval;
                    }
-                   beta = Math.min(value, beta);
-                   if(alfa>=beta) break;
+                   if(activa_poda){
+                       beta = Math.min(value, beta);
+                       if(alfa>=beta) break;
+                   }
+
                 }
             }
             return value;
         }
     }
     
-        /**
+     /**
      * Calcula la puntuación total del tablero combinando todas las heurísticas.
      * @param tauler Estado actual del tablero
      * @return Puntuación total del tablero
      */
-    private int calculaHeuristica(Tauler tauler) {
+    public int calculaHeuristica(Tauler tauler) {
+        ++num_jug;
         //Calculamos todas las heurisiticas posibles(horizontales, verticales y las 2 diagonales)
         return heuristicaHorizontal(tauler) +
                heuristicaVertical(tauler) +
@@ -231,6 +283,10 @@ implements Jugador, IAuto{
         return puntuacion;
     }
 
+    /**
+     * 
+     * @return nombre de nuestro jugador 
+     */
     @Override
     public String nom() {
         return nom;
